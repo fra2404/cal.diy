@@ -24,8 +24,11 @@ function isSelfHostedDangerousIP(ip: string): boolean {
   try {
     const addr = ipaddr.parse(ip);
 
-    if (addr.kind() === "ipv6" && addr.isIPv4MappedAddress()) {
-      return SELF_HOSTED_BLOCKED_RANGES.has(addr.toIPv4Address().range());
+    if (addr.kind() === "ipv6") {
+      const ipv6 = addr as ipaddr.IPv6;
+      if (ipv6.isIPv4MappedAddress()) {
+        return SELF_HOSTED_BLOCKED_RANGES.has(ipv6.toIPv4Address().range());
+      }
     }
 
     return SELF_HOSTED_BLOCKED_RANGES.has(addr.range());
