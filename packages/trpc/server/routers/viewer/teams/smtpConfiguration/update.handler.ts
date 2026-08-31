@@ -1,8 +1,11 @@
 import { getSmtpConfigurationService } from "@calcom/features/di/smtpConfiguration/containers/smtpConfiguration";
 import { resolveAndValidateSmtpHost } from "@calcom/lib/validateSmtpHost";
+
 import { TRPCError } from "@trpc/server";
-import type { TrpcSessionUser } from "../../../types";
-import type { TUpdateSmtpConfigurationInput } from "./updateSmtpConfiguration.schema";
+
+import type { TrpcSessionUser } from "../../../../types";
+import { assertCanManageTeamSmtp } from "./authorization";
+import type { TUpdateSmtpConfigurationInput } from "./schemas";
 
 type UpdateSmtpConfigurationOptions = {
   ctx: {
@@ -11,19 +14,8 @@ type UpdateSmtpConfigurationOptions = {
   input: TUpdateSmtpConfigurationInput;
 };
 
-function getOrganizationId(user: NonNullable<TrpcSessionUser>): number {
-  const organizationId = user.profile?.organizationId || user.organizationId;
-  if (!organizationId) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "You must be part of an organization to manage SMTP configurations",
-    });
-  }
-  return organizationId;
-}
-
 export const updateSmtpConfigurationHandler = async ({ ctx, input }: UpdateSmtpConfigurationOptions) => {
-  const organizationId = getOrganizationId(ctx.user);
+  await assertCanManageTeamSmtp(ctx.user, input.teamId);
 
   if (input.smtpHost) {
     const hostCheck = await resolveAndValidateSmtpHost(input.smtpHost);
@@ -37,7 +29,7 @@ export const updateSmtpConfigurationHandler = async ({ ctx, input }: UpdateSmtpC
 
   const service = getSmtpConfigurationService();
 
-  return service.update(input.id, organizationId, {
+  return service.update(input.id, input.teamId, {
     fromEmail: input.fromEmail,
     fromName: input.fromName,
     smtpHost: input.smtpHost,

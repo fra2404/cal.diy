@@ -42,8 +42,10 @@ import { ZSkipTrialForTeamInputSchema } from "./skipTrialForTeam.schema";
 import { ZUpdateInputSchema } from "./update.schema";
 import { ZUpdateInternalNotesPresetsInputSchema } from "./updateInternalNotesPresets.schema";
 import { ZUpdateMembershipInputSchema } from "./updateMembership.schema";
+import viewerTeamsSmtpRouter from "./smtpConfiguration/_router";
 
 export const viewerTeamsRouter = router({
+  smtpConfiguration: viewerTeamsSmtpRouter,
   // Retrieves team by id
   get: authedProcedure.input(ZGetSchema).query(async (opts) => {
     const { default: handler } = await import("./get.handler");

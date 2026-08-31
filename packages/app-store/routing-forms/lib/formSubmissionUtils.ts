@@ -97,12 +97,13 @@ export const sendResponseEmail = async (
   form: Pick<App_RoutingForms_Form, "id" | "name" | "fields">,
   orderedResponses: OrderedResponses,
   toAddresses: string[],
-  organizationId?: number | null
+  organizationId?: number | null,
+  teamId?: number | null
 ) => {
   try {
     if (typeof window === "undefined") {
       const { default: ResponseEmail } = await import("../emails/templates/response-email");
-      const email = new ResponseEmail({ form: form, toAddresses, orderedResponses, organizationId });
+      const email = new ResponseEmail({ form: form, toAddresses, orderedResponses, organizationId, teamId });
       await email.sendEmail();
     }
   } catch (e) {
@@ -308,13 +309,13 @@ export async function _onFormSubmission(
               ","
             )}`
           );
-          await sendResponseEmail(form, orderedResponses, form.userWithEmails, orgId);
+          await sendResponseEmail(form, orderedResponses, form.userWithEmails, orgId, teamId);
         }
       } else if (form.settings?.emailOwnerOnSubmission) {
         moduleLogger.debug(
           `Preparing to send Form Response email for Form:${form.id} to form owner: ${form.user.email}`
         );
-        await sendResponseEmail(form, orderedResponses, [form.user.email], orgId);
+        await sendResponseEmail(form, orderedResponses, [form.user.email], orgId, teamId);
       }
     } catch (e) {
       moduleLogger.error("Error triggering routing form response side effects", e);

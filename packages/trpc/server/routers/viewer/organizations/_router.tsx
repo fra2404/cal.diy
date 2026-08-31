@@ -18,17 +18,14 @@ import { ZAdminVerifyInput } from "./adminVerify.schema";
 import { ZBulkUsersDelete } from "./bulkDeleteUsers.schema.";
 import { ZCreateInputSchema } from "./create.schema";
 import { ZCreateSelfHostedInputSchema } from "./createSelfHosted.schema";
-import { ZCreateSmtpConfigurationInputSchema } from "./createSmtpConfiguration.schema";
 import { ZCreateTeamsSchema } from "./createTeams.schema";
 import { ZCreateWatchlistEntryInputSchema } from "./createWatchlistEntry.schema";
 import { ZCreateWithPaymentIntentInputSchema } from "./createWithPaymentIntent.schema";
-import { ZDeleteSmtpConfigurationInputSchema } from "./deleteSmtpConfiguration.schema";
 import { ZDeleteTeamInputSchema } from "./deleteTeam.schema";
 import { ZDeleteWatchlistEntryInputSchema } from "./deleteWatchlistEntry.schema";
 import { ZDismissBookingReportInputSchema } from "./dismissBookingReport.schema";
 import { ZGetMembersInput } from "./getMembers.schema";
 import { ZGetOtherTeamInputSchema } from "./getOtherTeam.handler";
-import { ZGetSmtpConfigurationInputSchema } from "./getSmtpConfiguration.schema";
 import { ZGetUserInput } from "./getUser.schema";
 import { ZGetWatchlistEntryDetailsInputSchema } from "./getWatchlistEntryDetails.schema";
 import { ZIntentToCreateOrgInputSchema } from "./intentToCreateOrg.schema";
@@ -38,11 +35,8 @@ import { ZListOtherTeamMembersSchema } from "./listOtherTeamMembers.handler";
 import { ZListWatchlistEntriesInputSchema } from "./listWatchlistEntries.schema";
 import { ZRemoveHostsFromEventTypes } from "./removeHostsFromEventTypes.schema";
 import { ZOrgPasswordResetSchema } from "./sendPasswordReset.schema";
-import { ZSendSmtpTestEmailInputSchema } from "./sendSmtpTestEmail.schema";
 import { ZSetPasswordSchema } from "./setPassword.schema";
-import { ZTestSmtpConnectionInputSchema } from "./testSmtpConnection.schema";
 import { ZUpdateInputSchema } from "./update.schema";
-import { ZUpdateSmtpConfigurationInputSchema } from "./updateSmtpConfiguration.schema";
 import { ZUpdateUserInputSchema } from "./updateUser.schema";
 
 export const viewerOrganizationsRouter = router({
@@ -224,43 +218,6 @@ export const viewerOrganizationsRouter = router({
     }),
   pendingReportsCount: authedOrgAdminProcedure.query(async (opts) => {
     const { default: handler } = await import("./pendingReportsCount.handler");
-    return handler(opts);
-  }),
-
-  listSmtpConfigurations: authedOrgAdminProcedure.query(async (opts) => {
-    const { default: handler } = await import("./listSmtpConfigurations.handler");
-    return handler(opts);
-  }),
-  getSmtpConfiguration: authedOrgAdminProcedure
-    .input(ZGetSmtpConfigurationInputSchema)
-    .query(async (opts) => {
-      const { default: handler } = await import("./getSmtpConfiguration.handler");
-      return handler(opts);
-    }),
-  createSmtpConfiguration: authedOrgAdminProcedure
-    .input(ZCreateSmtpConfigurationInputSchema)
-    .mutation(async (opts) => {
-      const { default: handler } = await import("./createSmtpConfiguration.handler");
-      return handler(opts);
-    }),
-  deleteSmtpConfiguration: authedOrgAdminProcedure
-    .input(ZDeleteSmtpConfigurationInputSchema)
-    .mutation(async (opts) => {
-      const { default: handler } = await import("./deleteSmtpConfiguration.handler");
-      return handler(opts);
-    }),
-  updateSmtpConfiguration: authedOrgAdminProcedure
-    .input(ZUpdateSmtpConfigurationInputSchema)
-    .mutation(async (opts) => {
-      const { default: handler } = await import("./updateSmtpConfiguration.handler");
-      return handler(opts);
-    }),
-  testSmtpConnection: authedOrgAdminProcedure.input(ZTestSmtpConnectionInputSchema).mutation(async (opts) => {
-    const { default: handler } = await import("./testSmtpConnection.handler");
-    return handler(opts);
-  }),
-  sendSmtpTestEmail: authedOrgAdminProcedure.input(ZSendSmtpTestEmailInputSchema).mutation(async (opts) => {
-    const { default: handler } = await import("./sendSmtpTestEmail.handler");
     return handler(opts);
   }),
 });

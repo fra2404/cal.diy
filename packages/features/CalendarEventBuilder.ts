@@ -194,6 +194,7 @@ export class CalendarEventBuilder {
       .withUid(uid)
       .withOneTimePassword(oneTimePassword)
       .withOrganization(organizationId)
+      .withTeamId(eventType?.teamId ?? null)
       .withAssignmentReason(
         assignmentReason?.[0]?.reasonEnum
           ? {
@@ -544,6 +545,14 @@ export class CalendarEventBuilder {
     this.event = {
       ...this.event,
       organizationId,
+    };
+    return this;
+  }
+
+  withTeamId(teamId?: number | null) {
+    this.event = {
+      ...this.event,
+      teamId,
     };
     return this;
   }

@@ -92,29 +92,8 @@ describe("SmtpConfigurationService", () => {
   });
 
   describe("create", () => {
-    it("should reject non-organization team", async () => {
-      const mockRepo = createMockRepository();
-      vi.mocked(mockRepo.isOrganization).mockResolvedValue(false);
-
-      const service = createService(mockRepo);
-      await expect(
-        service.create({
-          teamId: TEAM_ID,
-          fromEmail: "noreply@org.com",
-          fromName: "Org",
-          smtpHost: "smtp.org.com",
-          smtpPort: 465,
-          smtpUser: "testuser",
-          smtpPassword: "testpass",
-          smtpSecure: true,
-        })
-      ).rejects.toThrow(expect.objectContaining({ code: ErrorCode.Forbidden }));
-      expect(mockRepo.create).not.toHaveBeenCalled();
-    });
-
     it("should encrypt credentials and create config", async () => {
       const mockRepo = createMockRepository();
-      vi.mocked(mockRepo.isOrganization).mockResolvedValue(true);
       vi.mocked(mockRepo.existsByTeamId).mockResolvedValue(false);
       vi.mocked(mockRepo.create).mockResolvedValue(makeConfig());
 
@@ -141,7 +120,6 @@ describe("SmtpConfigurationService", () => {
 
     it("should reject duplicate config for same team", async () => {
       const mockRepo = createMockRepository();
-      vi.mocked(mockRepo.isOrganization).mockResolvedValue(true);
       vi.mocked(mockRepo.existsByTeamId).mockResolvedValue(true);
 
       const service = createService(mockRepo);
@@ -193,13 +171,13 @@ describe("SmtpConfigurationService", () => {
     });
   });
 
-  describe("getConfigForOrg", () => {
+  describe("getConfigForTeam", () => {
     it("should return decrypted config", async () => {
       const mockRepo = createMockRepository();
       vi.mocked(mockRepo.findByTeamIdWithCredentials).mockResolvedValue(makeConfig());
 
       const service = createService(mockRepo);
-      const result = await service.getConfigForOrg(TEAM_ID);
+      const result = await service.getConfigForTeam(TEAM_ID);
 
       expect(result).not.toBeNull();
       expect(result?.smtpUser).toBe("testuser");
@@ -212,7 +190,7 @@ describe("SmtpConfigurationService", () => {
       vi.mocked(mockRepo.findByTeamIdWithCredentials).mockResolvedValue(null);
 
       const service = createService(mockRepo);
-      const result = await service.getConfigForOrg(TEAM_ID);
+      const result = await service.getConfigForTeam(TEAM_ID);
 
       expect(result).toBeNull();
     });

@@ -5,7 +5,7 @@ const {
   mockCreateTransport,
   mockCheckIfFeatureIsEnabledGlobally,
   mockIsSmsCalEmail,
-  mockGetConfigForOrg,
+  mockGetConfigForTeam,
   mockSetTestEmail,
 } = vi.hoisted(() => {
   const mockSendMail = vi.fn();
@@ -14,7 +14,7 @@ const {
     mockCreateTransport: vi.fn(() => ({ sendMail: mockSendMail })),
     mockIsSmsCalEmail: vi.fn(() => false),
     mockCheckIfFeatureIsEnabledGlobally: vi.fn().mockResolvedValue(false),
-    mockGetConfigForOrg: vi.fn(),
+    mockGetConfigForTeam: vi.fn(),
     mockSetTestEmail: vi.fn(),
   };
 });
@@ -50,7 +50,7 @@ vi.mock("@calcom/lib/serverConfig", () => ({
 
 vi.mock("@calcom/features/di/smtpConfiguration/containers/smtpConfiguration", () => ({
   getSmtpConfigurationService: vi.fn(() => ({
-    getConfigForOrg: mockGetConfigForOrg,
+    getConfigForTeam: mockGetConfigForTeam,
   })),
 }));
 
@@ -69,25 +69,25 @@ vi.mock("@calcom/dayjs", () => {
 
 import BaseEmail from "./_base-email";
 
-const ORG_SMTP_CONFIG = {
-  smtpHost: "org-smtp.example.com",
+const TEAM_SMTP_CONFIG = {
+  smtpHost: "team-smtp.example.com",
   smtpPort: 465,
   smtpSecure: true,
-  smtpUser: "org-user",
-  smtpPassword: "org-pass",
-  fromEmail: "org@example.com",
-  fromName: "Org Name",
+  smtpUser: "team-user",
+  smtpPassword: "team-pass",
+  fromEmail: "team@example.com",
+  fromName: "Team Name",
 };
 
 class AttendeeScheduledEmail extends BaseEmail {
   name = "AttendeeScheduledEmail";
 
   constructor(
-    orgId?: number | null,
+    teamId?: number | null,
     private payloadOverrides?: Record<string, unknown>
   ) {
     super();
-    this.organizationId = orgId;
+    this.teamId = teamId;
   }
 
   protected async getNodeMailerPayload() {
@@ -104,9 +104,9 @@ class AttendeeScheduledEmail extends BaseEmail {
 class NonAllowlistedEmail extends BaseEmail {
   name = "SomeRandomEmail";
 
-  constructor(orgId?: number | null) {
+  constructor(teamId?: number | null) {
     super();
-    this.organizationId = orgId;
+    this.teamId = teamId;
   }
 
   protected async getNodeMailerPayload() {
@@ -126,7 +126,7 @@ describe("BaseEmail", () => {
     vi.stubEnv("INTEGRATION_TEST_MODE", "false");
     mockCheckIfFeatureIsEnabledGlobally.mockResolvedValue(false);
     mockIsSmsCalEmail.mockReturnValue(false);
-    mockGetConfigForOrg.mockResolvedValue(null);
+    mockGetConfigForTeam.mockResolvedValue(null);
     mockSendMail.mockImplementation((_payload, cb) => cb(null, { messageId: "ok" }));
   });
 
@@ -214,7 +214,7 @@ describe("BaseEmail", () => {
       );
     });
 
-    it("returns default smtp config when no organizationId", async () => {
+    it("returns default smtp config when no teamId", async () => {
       const email = new AttendeeScheduledEmail();
       await email.sendEmail();
 
@@ -230,8 +230,8 @@ describe("BaseEmail", () => {
       );
     });
 
-    it("returns org smtp config when allowlisted with org id", async () => {
-      mockGetConfigForOrg.mockResolvedValue(ORG_SMTP_CONFIG);
+    it("returns team smtp config when allowlisted with team id", async () => {
+      mockGetConfigForTeam.mockResolvedValue(TEAM_SMTP_CONFIG);
 
       const email = new AttendeeScheduledEmail(1);
       await email.sendEmail();
@@ -239,17 +239,17 @@ describe("BaseEmail", () => {
       expect(mockSetTestEmail).toHaveBeenCalledWith(
         expect.objectContaining({
           smtpConfig: {
-            host: "org-smtp.example.com",
+            host: "team-smtp.example.com",
             port: 465,
-            fromEmail: "org@example.com",
+            fromEmail: "team@example.com",
             isCustomSmtp: true,
           },
         })
       );
     });
 
-    it("returns default smtp config when org config fetch fails", async () => {
-      mockGetConfigForOrg.mockRejectedValue(new Error("DB error"));
+    it("returns default smtp config when team config fetch fails", async () => {
+      mockGetConfigForTeam.mockRejectedValue(new Error("DB error"));
 
       const email = new AttendeeScheduledEmail(1);
       await email.sendEmail();
@@ -314,7 +314,7 @@ describe("BaseEmail", () => {
 
   // ─── Default SMTP (No Org) ────────────────────────────────────
 
-  describe("default SMTP (no org config)", () => {
+  describe("default SMTP (no team config)", () => {
     it("sends with default transport and cal from address", async () => {
       const email = new AttendeeScheduledEmail();
       await email.sendEmail();
@@ -395,7 +395,7 @@ describe("BaseEmail", () => {
 
   // ─── Default SMTP Failure ─────────────────────────────────────
 
-  describe("default SMTP failure (no org)", () => {
+  describe("default SMTP failure (no team)", () => {
     it("does not retry when default SMTP fails", async () => {
       mockSendMail.mockImplementation((_payload, cb) => {
         cb(new Error("SMTP failed"), null);
@@ -422,29 +422,29 @@ describe("BaseEmail", () => {
 
   // ─── Org SMTP ─────────────────────────────────────────────────
 
-  describe("org SMTP", () => {
+  describe("team SMTP", () => {
     it("sends with org transport and org from (with fromName)", async () => {
-      mockGetConfigForOrg.mockResolvedValue(ORG_SMTP_CONFIG);
+      mockGetConfigForTeam.mockResolvedValue(TEAM_SMTP_CONFIG);
 
       const email = new AttendeeScheduledEmail(1);
       await email.sendEmail();
 
       expect(mockCreateTransport).toHaveBeenCalledTimes(1);
       expect(mockCreateTransport).toHaveBeenCalledWith({
-        host: "org-smtp.example.com",
+        host: "team-smtp.example.com",
         port: 465,
         secure: true,
-        auth: { user: "org-user", pass: "org-pass" },
+        auth: { user: "team-user", pass: "team-pass" },
       });
       expect(mockSendMail).toHaveBeenCalledWith(
-        expect.objectContaining({ from: "Org Name <org@example.com>" }),
+        expect.objectContaining({ from: "Team Name <team@example.com>" }),
         expect.any(Function)
       );
     });
 
     it("uses just email as from when org has no fromName", async () => {
-      mockGetConfigForOrg.mockResolvedValue({
-        ...ORG_SMTP_CONFIG,
+      mockGetConfigForTeam.mockResolvedValue({
+        ...TEAM_SMTP_CONFIG,
         fromName: "",
       });
 
@@ -452,14 +452,14 @@ describe("BaseEmail", () => {
       await email.sendEmail();
 
       expect(mockSendMail).toHaveBeenCalledWith(
-        expect.objectContaining({ from: "org@example.com" }),
+        expect.objectContaining({ from: "team@example.com" }),
         expect.any(Function)
       );
     });
 
     it("uses just email as from when org fromName is null", async () => {
-      mockGetConfigForOrg.mockResolvedValue({
-        ...ORG_SMTP_CONFIG,
+      mockGetConfigForTeam.mockResolvedValue({
+        ...TEAM_SMTP_CONFIG,
         fromName: null,
       });
 
@@ -467,13 +467,13 @@ describe("BaseEmail", () => {
       await email.sendEmail();
 
       expect(mockSendMail).toHaveBeenCalledWith(
-        expect.objectContaining({ from: "org@example.com" }),
+        expect.objectContaining({ from: "team@example.com" }),
         expect.any(Function)
       );
     });
 
-    it("does not use org SMTP for non-allowlisted email classes", async () => {
-      mockGetConfigForOrg.mockResolvedValue(ORG_SMTP_CONFIG);
+    it("does not use team SMTP for non-allowlisted email classes", async () => {
+      mockGetConfigForTeam.mockResolvedValue(TEAM_SMTP_CONFIG);
 
       const email = new NonAllowlistedEmail(1);
       await email.sendEmail();
@@ -485,28 +485,28 @@ describe("BaseEmail", () => {
       );
     });
 
-    it("does not use org SMTP when organizationId is null", async () => {
-      mockGetConfigForOrg.mockResolvedValue(ORG_SMTP_CONFIG);
+    it("does not use team SMTP when teamId is null", async () => {
+      mockGetConfigForTeam.mockResolvedValue(TEAM_SMTP_CONFIG);
 
       const email = new AttendeeScheduledEmail(null);
       await email.sendEmail();
 
       expect(mockCreateTransport).toHaveBeenCalledWith({ host: "default-smtp.cal.com", port: 587 });
-      expect(mockGetConfigForOrg).not.toHaveBeenCalled();
+      expect(mockGetConfigForTeam).not.toHaveBeenCalled();
     });
 
-    it("does not use org SMTP when organizationId is undefined", async () => {
-      mockGetConfigForOrg.mockResolvedValue(ORG_SMTP_CONFIG);
+    it("does not use team SMTP when teamId is undefined", async () => {
+      mockGetConfigForTeam.mockResolvedValue(TEAM_SMTP_CONFIG);
 
       const email = new AttendeeScheduledEmail(undefined);
       await email.sendEmail();
 
       expect(mockCreateTransport).toHaveBeenCalledWith({ host: "default-smtp.cal.com", port: 587 });
-      expect(mockGetConfigForOrg).not.toHaveBeenCalled();
+      expect(mockGetConfigForTeam).not.toHaveBeenCalled();
     });
 
-    it("does not use org SMTP when organizationId is 0", async () => {
-      mockGetConfigForOrg.mockResolvedValue(ORG_SMTP_CONFIG);
+    it("does not use team SMTP when teamId is 0", async () => {
+      mockGetConfigForTeam.mockResolvedValue(TEAM_SMTP_CONFIG);
 
       const email = new AttendeeScheduledEmail(0);
       await email.sendEmail();
@@ -514,8 +514,8 @@ describe("BaseEmail", () => {
       expect(mockCreateTransport).toHaveBeenCalledWith({ host: "default-smtp.cal.com", port: 587 });
     });
 
-    it("falls back to default when getOrgSmtpConfig returns null", async () => {
-      mockGetConfigForOrg.mockResolvedValue(null);
+    it("falls back to default when getTeamSmtpConfig returns null", async () => {
+      mockGetConfigForTeam.mockResolvedValue(null);
 
       const email = new AttendeeScheduledEmail(1);
       await email.sendEmail();
@@ -528,7 +528,7 @@ describe("BaseEmail", () => {
     });
 
     it("falls back to default when SMTP config service throws", async () => {
-      mockGetConfigForOrg.mockRejectedValue(new Error("Service unavailable"));
+      mockGetConfigForTeam.mockRejectedValue(new Error("Service unavailable"));
 
       const email = new AttendeeScheduledEmail(1);
       await email.sendEmail();
@@ -543,9 +543,9 @@ describe("BaseEmail", () => {
 
   // ─── Org SMTP Fallback ────────────────────────────────────────
 
-  describe("org SMTP fallback to default", () => {
-    it("retries with default transport and cal from when org SMTP fails", async () => {
-      mockGetConfigForOrg.mockResolvedValue(ORG_SMTP_CONFIG);
+  describe("team SMTP fallback to default", () => {
+    it("retries with default transport and cal from when team SMTP fails", async () => {
+      mockGetConfigForTeam.mockResolvedValue(TEAM_SMTP_CONFIG);
 
       let callCount = 0;
       mockSendMail.mockImplementation((_payload, cb) => {
@@ -562,16 +562,16 @@ describe("BaseEmail", () => {
 
       expect(mockCreateTransport).toHaveBeenCalledTimes(2);
       expect(mockCreateTransport).toHaveBeenNthCalledWith(1, {
-        host: "org-smtp.example.com",
+        host: "team-smtp.example.com",
         port: 465,
         secure: true,
-        auth: { user: "org-user", pass: "org-pass" },
+        auth: { user: "team-user", pass: "team-pass" },
       });
       expect(mockCreateTransport).toHaveBeenNthCalledWith(2, { host: "default-smtp.cal.com", port: 587 });
 
       expect(mockSendMail).toHaveBeenNthCalledWith(
         1,
-        expect.objectContaining({ from: "Org Name <org@example.com>" }),
+        expect.objectContaining({ from: "Team Name <team@example.com>" }),
         expect.any(Function)
       );
       expect(mockSendMail).toHaveBeenNthCalledWith(
@@ -582,7 +582,7 @@ describe("BaseEmail", () => {
     });
 
     it("uses cal from (not org from) on fallback even when org has no fromName", async () => {
-      mockGetConfigForOrg.mockResolvedValue({ ...ORG_SMTP_CONFIG, fromName: "" });
+      mockGetConfigForTeam.mockResolvedValue({ ...TEAM_SMTP_CONFIG, fromName: "" });
 
       let callCount = 0;
       mockSendMail.mockImplementation((_payload, cb) => {
@@ -599,7 +599,7 @@ describe("BaseEmail", () => {
 
       expect(mockSendMail).toHaveBeenNthCalledWith(
         1,
-        expect.objectContaining({ from: "org@example.com" }),
+        expect.objectContaining({ from: "team@example.com" }),
         expect.any(Function)
       );
       expect(mockSendMail).toHaveBeenNthCalledWith(
@@ -610,7 +610,7 @@ describe("BaseEmail", () => {
     });
 
     it("still returns 'send mail async' when both org and default SMTP fail", async () => {
-      mockGetConfigForOrg.mockResolvedValue(ORG_SMTP_CONFIG);
+      mockGetConfigForTeam.mockResolvedValue(TEAM_SMTP_CONFIG);
 
       mockSendMail.mockImplementation((_payload, cb) => {
         cb(new Error("SMTP failed"), null);
@@ -624,7 +624,7 @@ describe("BaseEmail", () => {
     });
 
     it("attempts exactly 2 sends when org fails and default also fails", async () => {
-      mockGetConfigForOrg.mockResolvedValue(ORG_SMTP_CONFIG);
+      mockGetConfigForTeam.mockResolvedValue(TEAM_SMTP_CONFIG);
 
       mockSendMail.mockImplementation((_payload, cb) => {
         cb(new Error("SMTP failed"), null);
@@ -767,8 +767,8 @@ describe("BaseEmail", () => {
       expect(sentPayload.cc).toBe("cc@example.com");
     });
 
-    it("includes headers from default options even with org SMTP", async () => {
-      mockGetConfigForOrg.mockResolvedValue(ORG_SMTP_CONFIG);
+    it("includes headers from default options even with team SMTP", async () => {
+      mockGetConfigForTeam.mockResolvedValue(TEAM_SMTP_CONFIG);
 
       const email = new AttendeeScheduledEmail(1);
       await email.sendEmail();

@@ -40,6 +40,7 @@ type scheduleEmailReminderArgs = ScheduleReminderArgs & {
   verifiedAt: Date | null;
   isOrganization?: boolean;
   organizationId?: number | null;
+  teamId?: number | null;
   autoTranslateEnabled?: boolean;
   sourceLocale?: string | null;
 };
@@ -57,6 +58,7 @@ type SendEmailReminderParams = {
     }[];
     sender?: string | null;
     organizationId?: number | null;
+    teamId?: number | null;
   };
   sendTo: string[];
   triggerEvent: WorkflowTriggerEvents;
@@ -122,6 +124,7 @@ const scheduleEmailReminderForEvt = async (args: scheduleEmailReminderArgs & { e
     action,
     isOrganization,
     organizationId,
+    teamId,
     autoTranslateEnabled,
     sourceLocale,
   } = args;
@@ -163,6 +166,7 @@ const scheduleEmailReminderForEvt = async (args: scheduleEmailReminderArgs & { e
     triggerEvent,
     isOrganization,
     organizationId,
+    teamId: teamId ?? evt?.teamId ?? null,
     workflowStepId,
     autoTranslateEnabled,
     sourceLocale,
@@ -196,6 +200,7 @@ const scheduleEmailReminderForForm = async (
     hideBranding,
     isOrganization,
     organizationId,
+    teamId,
   } = args;
 
   const emailContent = {
@@ -229,6 +234,7 @@ const scheduleEmailReminderForForm = async (
     html: emailContent.emailBody,
     sender,
     organizationId,
+    teamId,
   };
 
   await sendOrScheduleWorkflowEmailWithReminder({

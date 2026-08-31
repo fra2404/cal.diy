@@ -18,6 +18,7 @@ export type WorkflowEmailData = {
   sender?: string | null;
   attachments?: Attachment[];
   organizationId?: number | null;
+  teamId?: number | null;
 };
 
 export default class WorkflowEmail extends BaseEmail {
@@ -27,6 +28,7 @@ export default class WorkflowEmail extends BaseEmail {
     super();
     this.mailData = mailData;
     this.organizationId = mailData.organizationId;
+    this.teamId = mailData.teamId;
   }
 
   protected async getNodeMailerPayload(): Promise<Record<string, unknown>> {

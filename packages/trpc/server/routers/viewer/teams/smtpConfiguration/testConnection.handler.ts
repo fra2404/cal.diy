@@ -7,8 +7,9 @@ import { resolveAndValidateSmtpHost } from "@calcom/lib/validateSmtpHost";
 
 import { TRPCError } from "@trpc/server";
 
-import type { TrpcSessionUser } from "../../../types";
-import type { TTestSmtpConnectionInput } from "./testSmtpConnection.schema";
+import type { TrpcSessionUser } from "../../../../types";
+import { assertCanManageTeamSmtp } from "./authorization";
+import type { TTestSmtpConnectionInput } from "./schemas";
 
 const log = logger.getSubLogger({ prefix: ["testSmtpConnection.handler"] });
 
@@ -19,19 +20,8 @@ type TestSmtpConnectionOptions = {
   input: TTestSmtpConnectionInput;
 };
 
-function getOrganizationId(user: NonNullable<TrpcSessionUser>): number {
-  const organizationId = user.profile?.organizationId || user.organizationId;
-  if (!organizationId) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "You must be part of an organization to manage SMTP configurations",
-    });
-  }
-  return organizationId;
-}
-
 export const testSmtpConnectionHandler = async ({ ctx, input }: TestSmtpConnectionOptions) => {
-  const organizationId = getOrganizationId(ctx.user);
+  await assertCanManageTeamSmtp(ctx.user, input.teamId);
   const smtpService = getSmtpService();
 
   let user = input.smtpUser ?? "";
@@ -39,7 +29,7 @@ export const testSmtpConnectionHandler = async ({ ctx, input }: TestSmtpConnecti
 
   if (input.configId && (!user || !password)) {
     const configService = getSmtpConfigurationService();
-    const storedConfig = await configService.getConfigForOrg(organizationId);
+    const storedConfig = await configService.getConfigForTeam(input.teamId);
     if (!storedConfig) {
       throw new TRPCError({
         code: "NOT_FOUND",

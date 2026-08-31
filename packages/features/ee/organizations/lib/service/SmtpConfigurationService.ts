@@ -75,16 +75,11 @@ export class SmtpConfigurationService {
   }
 
   async create(params: CreateSmtpConfigurationParams): Promise<SmtpConfigurationPublic> {
-    const isOrg = await this.repository.isOrganization(params.teamId);
-    if (!isOrg) {
-      throw new ErrorWithCode(ErrorCode.Forbidden, "SMTP configuration is only available for organizations");
-    }
-
     const exists = await this.repository.existsByTeamId(params.teamId);
     if (exists) {
       throw new ErrorWithCode(
         ErrorCode.BadRequest,
-        "Organization already has an SMTP configuration. Please delete the existing one first."
+        "Team already has an SMTP configuration. Please delete the existing one first."
       );
     }
 
@@ -117,7 +112,7 @@ export class SmtpConfigurationService {
     await this.repository.delete(id);
   }
 
-  async listByOrganization(teamId: number): Promise<SmtpConfigurationPublic | null> {
+  async listByTeam(teamId: number): Promise<SmtpConfigurationPublic | null> {
     return this.repository.findByTeamId(teamId);
   }
 
@@ -129,7 +124,7 @@ export class SmtpConfigurationService {
     return config;
   }
 
-  async getConfigForOrg(teamId: number): Promise<SmtpEmailConfig | null> {
+  async getConfigForTeam(teamId: number): Promise<SmtpEmailConfig | null> {
     const config = await this.repository.findByTeamIdWithCredentials(teamId);
     if (!config) {
       return null;

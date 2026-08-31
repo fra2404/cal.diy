@@ -21,6 +21,7 @@ export default class AttendeeDailyVideoDownloadTranscriptEmail extends BaseEmail
     this.transcriptDownloadLinks = transcriptDownloadLinks;
     this.t = attendee.language.translate;
     this.organizationId = calEvent.organizationId;
+    this.teamId = calEvent.teamId ?? null;
   }
   protected async getNodeMailerPayload(): Promise<Record<string, unknown>> {
     const attachments = await Promise.all(

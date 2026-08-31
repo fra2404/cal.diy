@@ -402,6 +402,7 @@ async function handler(input: CancelBookingInput, dependencies?: Dependencies) {
     platformBookingUrl,
     customReplyToEmail: bookingToDelete.eventType?.customReplyToEmail,
     organizationId: ownerProfile?.organizationId ?? null,
+    teamId: teamId ?? null,
     schedulingType: bookingToDelete.eventType?.schedulingType,
     hideBranding: bookingToDelete.eventTypeId
       ? await getEventTypeService().shouldHideBrandingForEventType(bookingToDelete.eventTypeId, {

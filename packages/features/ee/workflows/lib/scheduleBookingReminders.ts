@@ -123,6 +123,7 @@ export async function scheduleBookingReminders(
           verifiedAt: step?.verifiedAt ?? null,
           isOrganization: isOrg,
           organizationId,
+          teamId,
           autoTranslateEnabled: step.autoTranslateEnabled,
           sourceLocale: step.sourceLocale,
         });

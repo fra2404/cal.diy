@@ -179,11 +179,6 @@ const getTabs = (orgBranding: OrganizationBranding | null) => {
           name: "guest_notifications",
           href: "/settings/organizations/guest-notifications",
         },
-        {
-          name: "smtp_configuration",
-          href: "/settings/organizations/smtp-configuration",
-          trackingMetadata: { section: "organization", page: "smtp_configuration" },
-        },
         ...(orgBranding
           ? [
               {
@@ -712,6 +707,14 @@ const TeamListCollapsible = ({ teamFeatures }: { teamFeatures?: Record<number, T
                         href={`/settings/teams/${team.id}/settings`}
                         textClassNames="px-3 text-emphasis font-medium text-sm"
                         trackingMetadata={{ section: "team", page: "settings", teamId: team.id }}
+                        className="px-2! me-5 h-7 w-auto"
+                        disableChevron
+                      />
+                      <VerticalTabItem
+                        name={t("smtp_configuration")}
+                        href={`/settings/teams/${team.id}/smtp-configuration`}
+                        textClassNames="px-3 text-emphasis font-medium text-sm"
+                        trackingMetadata={{ section: "team", page: "smtp_configuration", teamId: team.id }}
                         className="px-2! me-5 h-7 w-auto"
                         disableChevron
                       />

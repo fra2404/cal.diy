@@ -1579,6 +1579,7 @@ async function handler(
       platformBookingUrl,
     })
     .withOrganization(organizerOrganizationId)
+    .withTeamId(eventType.teamId ?? null)
     .withHashedLink(hasHashedBookingLink ? (reqBody.hashedLink ?? null) : null)
     .withHideBranding(
       await getEventTypeService().shouldHideBrandingForEventType(eventType.id, {

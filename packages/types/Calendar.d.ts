@@ -226,6 +226,7 @@ export interface CalendarEvent {
   customReplyToEmail?: string | null;
   rescheduledBy?: string;
   organizationId?: number | null;
+  teamId?: number | null;
   hasOrganizerChanged?: boolean;
   assignmentReason?: {
     category: string; // Translated label like "Routed", "Reassigned", etc.

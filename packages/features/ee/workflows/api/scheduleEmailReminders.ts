@@ -382,6 +382,7 @@ async function handler(req: NextRequest) {
               : undefined,
             sender: reminder.workflowStep.sender,
             organizationId,
+            teamId: reminder.workflowStep?.workflow?.teamId ?? null,
             ...(replyTo ? { replyTo } : {}),
           };
 
@@ -478,6 +479,7 @@ async function handler(req: NextRequest) {
             html: emailContent.emailBody,
             sender: reminder.workflowStep?.sender,
             organizationId,
+            teamId: reminder.workflowStep?.workflow?.teamId ?? null,
             ...(replyTo ? { replyTo } : {}),
           };
           if (isSendgridEnabled) {

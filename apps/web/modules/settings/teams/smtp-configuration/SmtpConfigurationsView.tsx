@@ -156,19 +156,25 @@ const SmtpConfigurationItem = ({
   );
 };
 
-const SmtpConfigurationsView = ({ permissions }: { permissions: { canRead: boolean; canEdit: boolean } }) => {
+const SmtpConfigurationsView = ({
+  teamId,
+  permissions,
+}: {
+  teamId: number;
+  permissions: { canRead: boolean; canEdit: boolean };
+}) => {
   const { t } = useLocale();
   const utils = trpc.useUtils();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editConfig, setEditConfig] = useState<SmtpConfiguration | null>(null);
   const [deleteConfig, setDeleteConfig] = useState<SmtpConfiguration | null>(null);
 
-  const { data: config, isPending } = trpc.viewer.organizations.listSmtpConfigurations.useQuery();
+  const { data: config, isPending } = trpc.viewer.teams.smtpConfiguration.list.useQuery({ teamId });
 
-  const deleteMutation = trpc.viewer.organizations.deleteSmtpConfiguration.useMutation({
+  const deleteMutation = trpc.viewer.teams.smtpConfiguration.delete.useMutation({
     onSuccess: () => {
       showToast(t("smtp_configuration_deleted"), "success");
-      utils.viewer.organizations.listSmtpConfigurations.invalidate();
+      utils.viewer.teams.smtpConfiguration.list.invalidate();
       setDeleteConfig(null);
     },
     onError: (error) => {
@@ -176,7 +182,7 @@ const SmtpConfigurationsView = ({ permissions }: { permissions: { canRead: boole
     },
   });
 
-  const sendTestEmailMutation = trpc.viewer.organizations.sendSmtpTestEmail.useMutation({
+  const sendTestEmailMutation = trpc.viewer.teams.smtpConfiguration.sendTestEmail.useMutation({
     onSuccess: (data) => {
       if (data.success) {
         showToast(t("smtp_test_email_sent"), "success");
@@ -198,7 +204,7 @@ const SmtpConfigurationsView = ({ permissions }: { permissions: { canRead: boole
   };
 
   const handleSendTestEmail = (id: number) => {
-    sendTestEmailMutation.mutate({ id });
+    sendTestEmailMutation.mutate({ teamId, id });
   };
 
   if (isPending) return <SkeletonLoader />;
@@ -240,6 +246,7 @@ const SmtpConfigurationsView = ({ permissions }: { permissions: { canRead: boole
               setEditConfig(null);
             }
           }}
+          teamId={teamId}
           config={editConfig || undefined}
         />
 
@@ -252,7 +259,7 @@ const SmtpConfigurationsView = ({ permissions }: { permissions: { canRead: boole
               confirmBtnText={t("confirm_delete_smtp_configuration")}
               loadingText={t("deleting")}
               onConfirm={() => {
-                deleteMutation.mutate({ id: deleteConfig.id });
+                deleteMutation.mutate({ teamId, id: deleteConfig.id });
               }}>
               {t("delete_smtp_configuration_description", { email: deleteConfig.fromEmail })}
             </ConfirmationDialogContent>

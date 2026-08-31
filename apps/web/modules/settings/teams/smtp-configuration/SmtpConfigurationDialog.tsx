@@ -16,7 +16,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 export type SmtpConfiguration = NonNullable<
-  RouterOutputs["viewer"]["organizations"]["listSmtpConfigurations"]
+  RouterOutputs["viewer"]["teams"]["smtpConfiguration"]["list"]
 >;
 
 const formSchema = z.object({
@@ -34,10 +34,11 @@ type FormValues = z.infer<typeof formSchema>;
 interface SmtpConfigurationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  teamId: number;
   config?: SmtpConfiguration;
 }
 
-const SmtpConfigurationDialog = ({ open, onOpenChange, config }: SmtpConfigurationDialogProps) => {
+const SmtpConfigurationDialog = ({ open, onOpenChange, teamId, config }: SmtpConfigurationDialogProps) => {
   const isEditing = !!config;
   const { t } = useLocale();
   const utils = trpc.useUtils();
@@ -96,7 +97,7 @@ const SmtpConfigurationDialog = ({ open, onOpenChange, config }: SmtpConfigurati
     },
   };
 
-  const testConnectionMutation = trpc.viewer.organizations.testSmtpConnection.useMutation({
+  const testConnectionMutation = trpc.viewer.teams.smtpConfiguration.testConnection.useMutation({
     onSuccess: (result) => {
       setConnectionStatus({ tested: true, success: result.success, error: result.error });
       showToast(
@@ -115,7 +116,7 @@ const SmtpConfigurationDialog = ({ open, onOpenChange, config }: SmtpConfigurati
   const onMutationSuccess = (toastKey: string) => ({
     onSuccess: () => {
       showToast(t(toastKey), "success");
-      utils.viewer.organizations.listSmtpConfigurations.invalidate();
+      utils.viewer.teams.smtpConfiguration.list.invalidate();
       onOpenChange(false);
       form.reset();
       setConnectionStatus(null);
@@ -123,11 +124,11 @@ const SmtpConfigurationDialog = ({ open, onOpenChange, config }: SmtpConfigurati
     ...mutationCallbacks,
   });
 
-  const createMutation = trpc.viewer.organizations.createSmtpConfiguration.useMutation(
+  const createMutation = trpc.viewer.teams.smtpConfiguration.create.useMutation(
     onMutationSuccess("smtp_configuration_created")
   );
 
-  const updateMutation = trpc.viewer.organizations.updateSmtpConfiguration.useMutation(
+  const updateMutation = trpc.viewer.teams.smtpConfiguration.update.useMutation(
     onMutationSuccess("smtp_configuration_updated")
   );
 
@@ -144,6 +145,7 @@ const SmtpConfigurationDialog = ({ open, onOpenChange, config }: SmtpConfigurati
     setIsTesting(true);
     setConnectionStatus(null);
     testConnectionMutation.mutate({
+      teamId,
       ...(isEditing && config ? { configId: config.id } : {}),
       smtpHost: values.smtpHost,
       smtpPort: Number(values.smtpPort),
@@ -158,6 +160,7 @@ const SmtpConfigurationDialog = ({ open, onOpenChange, config }: SmtpConfigurati
 
     if (isEditing && config) {
       updateMutation.mutate({
+        teamId,
         id: config.id,
         fromEmail: values.fromEmail !== config.fromEmail ? values.fromEmail : undefined,
         fromName: values.fromName !== config.fromName ? values.fromName : undefined,
@@ -169,6 +172,7 @@ const SmtpConfigurationDialog = ({ open, onOpenChange, config }: SmtpConfigurati
       });
     } else {
       createMutation.mutate({
+        teamId,
         ...values,
         smtpUser: values.smtpUser || "",
         smtpPassword: values.smtpPassword || "",

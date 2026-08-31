@@ -80,6 +80,7 @@ export class EmailWorkflowService {
       ? workflow.teamId
       : workflow.team?.parentId ?? null;
     const organizationId = workflowOrganizationId ?? evt.organizationId ?? null;
+    const teamId = workflow.teamId ?? evt.teamId ?? null;
 
     let emailAttendeeSendToOverride: string | null = null;
     if (workflowReminder.seatReferenceId) {
@@ -127,6 +128,7 @@ export class EmailWorkflowService {
       includeCalendarEvent: workflowReminder.workflowStep.includeCalendarEvent,
       isOrganization,
       organizationId,
+      teamId,
     });
 
     const results = await Promise.allSettled(
@@ -297,6 +299,7 @@ export class EmailWorkflowService {
     triggerEvent,
     isOrganization,
     organizationId,
+    teamId,
     workflowStepId,
     autoTranslateEnabled,
     sourceLocale,
@@ -314,6 +317,7 @@ export class EmailWorkflowService {
     triggerEvent: WorkflowTriggerEvents;
     isOrganization?: boolean;
     organizationId?: number | null;
+    teamId?: number | null;
     workflowStepId?: number;
     autoTranslateEnabled?: boolean;
     sourceLocale?: string | null;
@@ -635,6 +639,7 @@ export class EmailWorkflowService {
       attachments,
       sender,
       organizationId,
+      teamId,
     };
   }
 }

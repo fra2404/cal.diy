@@ -14,17 +14,20 @@ export default class ResponseEmail extends BaseEmail {
     orderedResponses,
     form,
     organizationId,
+    teamId,
   }: {
     form: Form;
     toAddresses: string[];
     orderedResponses: OrderedResponses;
     organizationId?: number | null;
+    teamId?: number | null;
   }) {
     super();
     this.form = form;
     this.orderedResponses = orderedResponses;
     this.toAddresses = toAddresses;
     this.organizationId = organizationId;
+    this.teamId = teamId;
   }
 
   protected async getNodeMailerPayload(): Promise<Record<string, unknown>> {

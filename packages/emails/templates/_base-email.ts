@@ -21,28 +21,29 @@ const log = logger.getSubLogger({ prefix: ["BaseEmail"] });
 export default class BaseEmail {
   name = "";
   protected organizationId?: number | null;
+  protected teamId?: number | null;
 
   private canUseCustomSmtp(): boolean {
     const className = this.constructor.name;
-    return (CUSTOM_SMTP_ALLOWED_EMAILS as readonly string[]).includes(className) && !!this.organizationId;
+    return (CUSTOM_SMTP_ALLOWED_EMAILS as readonly string[]).includes(className) && !!this.teamId;
   }
 
-  private async getOrgSmtpConfig(): Promise<SmtpEmailConfig | null> {
-    if (!this.organizationId || !this.canUseCustomSmtp()) return null;
+  private async getTeamSmtpConfig(): Promise<SmtpEmailConfig | null> {
+    if (!this.teamId || !this.canUseCustomSmtp()) return null;
 
     try {
       const service = getSmtpConfigurationService();
-      return await service.getConfigForOrg(this.organizationId);
+      return await service.getConfigForTeam(this.teamId);
     } catch (error) {
-      log.warn("Failed to fetch org SMTP config, falling back to default", {
-        organizationId: this.organizationId,
+      log.warn("Failed to fetch team SMTP config, falling back to default", {
+        teamId: this.teamId,
         error,
       });
       return null;
     }
   }
 
-  private buildOrgTransport(config: SmtpEmailConfig): SMTPTransport.Options {
+  private buildTeamTransport(config: SmtpEmailConfig): SMTPTransport.Options {
     return {
       host: config.smtpHost,
       port: config.smtpPort,
@@ -67,15 +68,15 @@ export default class BaseEmail {
       return defaultConfig;
     }
 
-    const orgConfig = await this.getOrgSmtpConfig();
-    if (!orgConfig) {
+    const teamConfig = await this.getTeamSmtpConfig();
+    if (!teamConfig) {
       return defaultConfig;
     }
 
     return {
-      host: orgConfig.smtpHost,
-      port: orgConfig.smtpPort,
-      fromEmail: orgConfig.fromEmail,
+      host: teamConfig.smtpHost,
+      port: teamConfig.smtpPort,
+      fromEmail: teamConfig.fromEmail,
       isCustomSmtp: true,
     };
   }
@@ -140,15 +141,15 @@ export default class BaseEmail {
 
     const defaultOptions = this.getMailerOptions();
     let transport = defaultOptions.transport;
-    let usingOrgSmtp = false;
+    let usingTeamSmtp = false;
 
-    const orgConfig = await this.getOrgSmtpConfig();
-    if (orgConfig) {
-      transport = this.buildOrgTransport(orgConfig);
-      from = orgConfig.fromName ? `${orgConfig.fromName} <${orgConfig.fromEmail}>` : orgConfig.fromEmail;
-      usingOrgSmtp = true;
+    const teamConfig = await this.getTeamSmtpConfig();
+    if (teamConfig) {
+      transport = this.buildTeamTransport(teamConfig);
+      from = teamConfig.fromName ? `${teamConfig.fromName} <${teamConfig.fromEmail}>` : teamConfig.fromEmail;
+      usingTeamSmtp = true;
       log.info("Using custom SMTP config", {
-        organizationId: this.organizationId,
+        teamId: this.teamId,
         emailClass: this.constructor.name,
       });
     }
@@ -182,22 +183,22 @@ export default class BaseEmail {
 
     try {
       await sendWithTransport(transport, sanitizedFrom);
-    } catch (orgSmtpError) {
-      if (usingOrgSmtp) {
-        log.warn("Org SMTP failed, retrying with default SMTP", {
-          organizationId: this.organizationId,
+    } catch (teamSmtpError) {
+      if (usingTeamSmtp) {
+        log.warn("Team SMTP failed, retrying with default SMTP", {
+          teamId: this.teamId,
           emailClass: this.constructor.name,
-          error: orgSmtpError,
+          error: teamSmtpError,
         });
         try {
           await sendWithTransport(defaultOptions.transport, sanitizedCalFrom);
-          log.info("Successfully sent email using default SMTP after org SMTP failure", {
-            organizationId: this.organizationId,
+          log.info("Successfully sent email using default SMTP after team SMTP failure", {
+            teamId: this.teamId,
             emailClass: this.constructor.name,
           });
         } catch (defaultSmtpError) {
-          log.error("sendEmail failed with both org and default SMTP", {
-            organizationId: this.organizationId,
+          log.error("sendEmail failed with both team and default SMTP", {
+            teamId: this.teamId,
             emailClass: this.constructor.name,
           });
         }

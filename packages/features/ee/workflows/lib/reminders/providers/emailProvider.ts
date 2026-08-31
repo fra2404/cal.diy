@@ -25,6 +25,7 @@ export async function sendOrScheduleWorkflowEmails(mailData: EmailData) {
           replyTo: mailData.replyTo,
           attachments: mailData.attachments,
           organizationId: mailData.organizationId,
+          teamId: mailData.teamId,
         })
       )
     );

@@ -20,6 +20,7 @@ export default class BrokenIntegrationEmail extends BaseEmail {
     this.t = this.calEvent.organizer.language.translate;
     this.type = type;
     this.organizationId = calEvent.organizationId;
+    this.teamId = calEvent.teamId ?? null;
   }
 
   protected async getNodeMailerPayload(): Promise<Record<string, unknown>> {

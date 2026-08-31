@@ -134,6 +134,7 @@ export type BookingInfo = {
     url?: string;
   };
   organizationId?: number | null;
+  teamId?: number | null;
   platformClientId?: string | null;
 };
 

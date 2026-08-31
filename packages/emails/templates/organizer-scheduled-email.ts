@@ -37,6 +37,7 @@ export default class OrganizerScheduledEmail extends BaseEmail {
     this.reassigned = input.reassigned;
     this.attendee = input.attendee;
     this.organizationId = input.calEvent.organizationId;
+    this.teamId = input.calEvent.teamId ?? null;
   }
 
   protected async getNodeMailerPayload(): Promise<Record<string, unknown>> {
