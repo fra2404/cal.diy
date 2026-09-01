@@ -27,6 +27,19 @@ export const zodNonRouterField = z.object({
   placeholder: z.string().optional(),
   type: z.string(),
   /**
+   * Optional conditions to show the field only when a previous field matches.
+   * Example: show "Con chi hai fatto la prima lezione?" only when "scelta" equals "no".
+   */
+  visibleIf: z
+    .array(
+      z.object({
+        field: z.string(),
+        operator: z.enum(["equals", "not_equals"]),
+        value: z.string(),
+      })
+    )
+    .optional(),
+  /**
    * @deprecated in favour of `options`
    */
   selectText: z.string().optional(),
