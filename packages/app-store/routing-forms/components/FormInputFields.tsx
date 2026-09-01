@@ -11,6 +11,7 @@ import { getQueryBuilderConfigForFormFields } from "../lib/getQueryBuilderConfig
 import isRouterLinkedField from "../lib/isRouterLinkedField";
 import { getUIOptionsForSelect } from "../lib/selectOptions";
 import { getFieldResponseForJsonLogic } from "../lib/transformResponse";
+import { isFieldVisible } from "@calcom/features/routing-forms/lib/fieldVisibility";
 import type { SerializableForm, FormResponse, Field } from "../types/types";
 import { ConfigFor, withRaqbSettingsAndWidgets } from "./react-awesome-query-builder/config/uiConfig";
 
@@ -26,23 +27,6 @@ export type FormInputFieldsProps = {
    */
   disabledFields?: string[];
 };
-
-/**
- * A field is visible only when all of its `visibleIf` conditions are currently met.
- * Field ids without conditions are always visible.
- */
-function isFieldVisible(field: Field, response: FormResponse): boolean {
-  const conditions = field.visibleIf;
-  if (!conditions?.length) return true;
-
-  for (const condition of conditions) {
-    const answer = response[condition.field]?.value;
-    const matches = typeof answer === "string" && answer === condition.value;
-    if (condition.operator === "equals" && !matches) return false;
-    if (condition.operator === "not_equals" && matches) return false;
-  }
-  return true;
-}
 
 export default function FormInputFields(props: FormInputFieldsProps) {
   const { form, response, setResponse, disabledFields = [] } = props;

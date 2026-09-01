@@ -16,6 +16,8 @@ export type TNonRouterField = {
   required?: boolean;
   deleted?: boolean;
   options?: FieldOption[];
+  /** Show the field only when these conditions are met (see `visibleIf` in the zod schema) */
+  visibleIf?: { field: string; operator: "equals" | "not_equals"; value: string }[];
 };
 
 // Note: zodNonRouterField is NOT annotated with z.ZodType because it uses .extend() below

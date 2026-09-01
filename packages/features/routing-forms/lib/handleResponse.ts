@@ -17,6 +17,7 @@ import { prisma } from "@calcom/prisma";
 import { Prisma } from "@calcom/prisma/client";
 import { z } from "zod";
 import { findTeamMembersMatchingAttributeLogic } from "./findTeamMembersMatchingAttributeLogic";
+import { isFieldVisible } from "./fieldVisibility";
 
 const moduleLogger = logger.getSubLogger({ prefix: ["routing-forms/lib/handleResponse"] });
 
@@ -65,7 +66,10 @@ const _handleResponse = async ({
     };
 
     const missingFields = serializableFormWithFields.fields
-      .filter((field) => !(field.required ? response[field.id]?.value : true))
+      .filter(
+        (field) =>
+          isFieldVisible(field, response) && !(field.required ? response[field.id]?.value : true)
+      )
       .map((f) => f.label);
 
     if (missingFields.length) {
